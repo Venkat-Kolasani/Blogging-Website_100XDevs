@@ -10,16 +10,20 @@ const app = new Hono<{
 }>();
 
 app.use('/api/v1/blog/*', async (c, next) => {
-  // Middleware to handle authentication or other pre-processing
-  const header = c.req.header('Authorization') || "";
+	const jwt = c.req.header('Authorization');
+	if (!jwt) {
+		c.status(401);
+		return c.json({ error: "unauthorized" });
+	}
+	const token = jwt.split(' ')[1];
   // @ts-ignore
-  const response = await verify(header, c.env.JWT_SECRET);
-  if(response.id) {
-	await next();
-  } else {
-	c.status(403);
-	return c.json({ error: "Unauthorized" });
-  }
+	const payload = await verify(token, c.env.JWT_SECRET);
+	if (!payload) {
+		c.status(401);
+		return c.json({ error: "unauthorized" });
+	}
+	c.set('userId', payload.id);
+	await next()
 })
 
 app.post('/api/v1/signup', async (c) => {
