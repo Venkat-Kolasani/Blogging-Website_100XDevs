@@ -1,13 +1,19 @@
 import { Hono } from 'hono'
 import { PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
-import { sign } from 'hono/jwt'
-
+import { decode, sign, verify } from 'hono/jwt'
+// Importing the user and book routers
+import { userRouter } from './routes/user';
+import { blogRouter } from './routes/blog';
 const app = new Hono<{
 	Bindings: {
 		DATABASE_URL: string
+		JWT_SECRET: string
 	}
 }>();
+
+app.route('/api/v1/user', userRouter)
+app.route('/api/v1/blog', blogRouter);
 
 app.use('/api/v1/blog/*', async (c, next) => {
 	const jwt = c.req.header('Authorization');
@@ -26,7 +32,7 @@ app.use('/api/v1/blog/*', async (c, next) => {
 	await next()
 })
 
-app.post('/api/v1/signup', async (c) => {
+export default app;
 	const prisma = new PrismaClient({
 		datasourceUrl: c.env?.DATABASE_URL,
 	}).$extends(withAccelerate());
