@@ -5,15 +5,13 @@ import { decode, sign, verify } from 'hono/jwt'
 // Importing the user and book routers
 import { userRouter } from './routes/user';
 import { blogRouter } from './routes/blog';
+
 const app = new Hono<{
 	Bindings: {
 		DATABASE_URL: string
 		JWT_SECRET: string
 	}
 }>();
-
-app.route('/api/v1/user', userRouter)
-app.route('/api/v1/blog', blogRouter);
 
 app.use('/api/v1/blog/*', async (c, next) => {
 	const jwt = c.req.header('Authorization');
@@ -22,7 +20,7 @@ app.use('/api/v1/blog/*', async (c, next) => {
 		return c.json({ error: "unauthorized" });
 	}
 	const token = jwt.split(' ')[1];
-  // @ts-ignore
+	// @ts-ignore
 	const payload = await verify(token, c.env.JWT_SECRET);
 	if (!payload) {
 		c.status(401);
@@ -32,8 +30,10 @@ app.use('/api/v1/blog/*', async (c, next) => {
 	await next()
 })
 
+app.route('/api/v1/user', userRouter)
+app.route('/api/v1/blog', blogRouter);
+
 export default app;
-	const prisma = new PrismaClient({
 		datasourceUrl: c.env?.DATABASE_URL,
 	}).$extends(withAccelerate());
 	const body = await c.req.json();
