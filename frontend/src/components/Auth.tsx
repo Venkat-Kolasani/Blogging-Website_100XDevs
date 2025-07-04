@@ -11,16 +11,23 @@ export const Auth = ({ type }: { type: "signup" | "signin" }) => {
         username: "",
         password: ""
     });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     async function sendRequest() {
         try {
+            setError("");
+            setLoading(true);
             const response = await axios.post(`${BACKEND_URL}/api/v1/user/${type === "signup" ? "signup" : "signin"}`, postInputs);
             const jwt = response.data;
             localStorage.setItem("token", jwt);
             navigate("/blogs");
-        } catch(e) {
-            alert("Error while signing up")
-            // alert the user here that the request failed
+        } catch(e: any) {
+            const message = e.response?.data?.message || "An error occurred while signing in";
+            setError(message);
+            console.error("Auth error:", e);
+        } finally {
+            setLoading(false);
         }
     }
     
@@ -39,6 +46,9 @@ export const Auth = ({ type }: { type: "signup" | "signin" }) => {
                     </div>
                 </div>
                 <div className="pt-8">
+                    {error && (
+                        <div className="text-red-500 text-sm mb-4">{error}</div>
+                    )}
                     {type === "signup" ? <LabelledInput label="Name" placeholder="Harkirat Singh..." onChange={(e) => {
                         setPostInputs({
                             ...postInputs,
@@ -57,7 +67,14 @@ export const Auth = ({ type }: { type: "signup" | "signin" }) => {
                             password: e.target.value
                         })
                     }} />
-                    <button onClick={sendRequest} type="button" className="mt-8 w-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">{type === "signup" ? "Sign up" : "Sign in"}</button>
+                    <button 
+                        onClick={sendRequest} 
+                        disabled={loading}
+                        type="button" 
+                        className={`mt-8 w-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        {loading ? 'Loading...' : (type === "signup" ? "Sign up" : "Sign in")}
+                    </button>
                 </div>
             </div>
         </div>
